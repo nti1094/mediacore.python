@@ -1,8 +1,40 @@
-#!/usr/bin/python
-print "Content-type: text/html"
-print
-print "<html><head>"
-print ""
-print "</head><body>"
-print "Test Page"
-print "</body></html>"
+import urllib
+try:
+   import json # py26
+except:
+   import simplejson as json # py25 and under
+
+api_url = 'http://padcloud.net/api/media'
+api_key = 'hQnEOpIuFCMe6XPcQiv'
+excerpt_length = 180
+
+def fetch_media_list(**kwargs):
+   kwargs['api_key'] = api_key
+   querystring = urllib.urlencode(kwargs)
+   f = urllib.urlopen(api_url + '?' + querystring)
+   return json.loads(f.read())
+
+def truncate(text):
+   if len(text) > excerpt_length:
+      right = text[:excerpt_length].rindex(' ')
+      text = text[:right] + '&hellip;'
+   return text
+
+result = fetch_media_list(
+   type='video',
+   published_after='2011-12-11 00:00:00',
+   limit=18
+)
+videos = result['media']
+
+output = ["<h1>Previews:</h1>"]
+
+for v in videos:
+   output.append(
+      '<div><a href="%s"><img src="%s" alt="%s"/>%s</a>%s</div>' % (
+         v['url'], v['thumbs']['s']['url'], v['title'], v['title'],
+         truncate(v['description_plain'])
+      )
+   )
+
+print '\n'.join(output)
